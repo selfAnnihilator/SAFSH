@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -o
 LIBS = -lreadline
 
 safsh: safsh.c

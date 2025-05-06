@@ -42,12 +42,27 @@ void safsh_loop(void){
 
 #define SAFSH_RL_BUFSIZE 1024
 char *safsh_read_line(void) {
-    char *line = readline("> ");
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        perror("safsh: getcwd");
+        strcpy(cwd, "?");
+    }
+
+    // Extract the last component of the path (the current directory name)
+    char *dir_name = strrchr(cwd, '/');
+    dir_name = (dir_name != NULL && *(dir_name + 1) != '\0') ? dir_name + 1 : cwd;
+
+    char prompt[1060];
+    snprintf(prompt, sizeof(prompt), "%s => ", dir_name);
+
+    char *line = readline(prompt);
     if (line && *line) {
         add_history(line);
     }
     return line;
 }
+
+
 
 
 #define SAFSH_TOK_BUFSIZE 64
@@ -167,6 +182,7 @@ int safsh_help(char **args) {
 }
 
 int safsh_exit(char **args) {
+    printf("Exiting SAFSH...\n");
     return 0;
 }
 
@@ -188,15 +204,22 @@ int safsh_execute(char **args) {
 }
 
 void handle_sigint(int sig){
-    printf("safsh: caught SIGINT\n");
-    write(STDOUT_FILENO, "\n> ", 3);
-    fflush(stdout);
+    rl_replace_line("", 0);  // Clear the current line
+    printf("\n");
+    rl_on_new_line();
+    rl_redisplay();          // Redisplay the prompt
 }
+
 
 
 int main(int argc, char **argv) {
     // Load config files, if any.
-    signal(SIGINT, handle_sigint);
+    struct sigaction sa;
+    sa.sa_handler = handle_sigint;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;  // restart interrupted syscalls like readline
+    sigaction(SIGINT, &sa, NULL);
+
 
     // run command loop.
     safsh_loop();
