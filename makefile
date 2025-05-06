@@ -1,9 +1,12 @@
 CC = gcc
-CFLAGS = -o
-LIBS = -lreadline
+CFLAGS = -Wall -g
+LDFLAGS = -lreadline
+TARGET = safsh
 
-safsh: safsh.c
-	$(CC) $(CFLAGS) safsh.c -o safsh $(LIBS)
+all: $(TARGET)
+
+$(TARGET): safsh.c
+	$(CC) $(CFLAGS) safsh.c -o $(TARGET) $(LDFLAGS)
 
 clean:
-	rm -f safsh
+	rm -f $(TARGET)
