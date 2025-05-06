@@ -1,1 +1,1 @@
-##SAFSH - Simple As Fuck Shell
+#SAFSH - Simple As Fuck Shell
