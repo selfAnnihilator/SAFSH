@@ -6,33 +6,26 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
+#include <signal.h>
+
 
 void safsh_loop(void);
 char *safsh_read_line(void);
 char **safsh_split_line(char *line);
 int safsh_launch(char **args);
 int safsh_execute(char **args);
+void handle_sigint(int sig);
 
 
-int main(int argc, char **argv) {
-    // Load config files, if any.
-
-    // run command loop.
-    safsh_loop();
-
-    // perform any shutdown/cleanup.
-
-    return EXIT_SUCCESS;
-}
-
-
+#define SAFSH_PROMPT "> "
 void safsh_loop(void){
     char *line;
     char **args;
     int status;
 
     do{
-        printf("> ");
+        printf(SAFSH_PROMPT);
         fflush(stdout);  // Force output of the prompt immediately
 
         line = safsh_read_line();
@@ -61,7 +54,7 @@ char *safsh_read_line(void){
         // read a character
         c = getchar();
 
-        // if we hit EOF, replace it with a null character and replace
+        // if we hit EOF or newline, terminate the string with null character and return
         if(c == EOF || c == '\n'){
             buffer[position] = '\0';
             return buffer;
@@ -220,4 +213,23 @@ int safsh_execute(char **args) {
     }
 
     return safsh_launch(args);
+}
+
+void handle_sigint(int sig){
+    printf("safsh: caught SIGINT\n");
+    write(STDOUT_FILENO, "\n> ", 3);
+    fflush(stdout);
+}
+
+
+int main(int argc, char **argv) {
+    // Load config files, if any.
+    signal(SIGINT, handle_sigint);
+
+    // run command loop.
+    safsh_loop();
+
+    // perform any shutdown/cleanup.
+
+    return EXIT_SUCCESS;
 }
