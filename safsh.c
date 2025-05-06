@@ -8,6 +8,8 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 
 void safsh_loop(void);
@@ -25,8 +27,8 @@ void safsh_loop(void){
     int status;
 
     do{
-        printf(SAFSH_PROMPT);
-        fflush(stdout);  // Force output of the prompt immediately
+        // printf(SAFSH_PROMPT);
+        // fflush(stdout);  // Force output of the prompt immediately
 
         line = safsh_read_line();
         args = safsh_split_line(line);
@@ -39,42 +41,12 @@ void safsh_loop(void){
 
 
 #define SAFSH_RL_BUFSIZE 1024
-char *safsh_read_line(void){
-    int bufsize = SAFSH_RL_BUFSIZE;
-    int position = 0;
-    char *buffer = malloc(sizeof(char) * bufsize);
-    int c;
-
-    if (!buffer){
-        fprintf(stderr, "safsh: allocation error\n");
-        exit(EXIT_FAILURE);
+char *safsh_read_line(void) {
+    char *line = readline("> ");
+    if (line && *line) {
+        add_history(line);
     }
-
-    while(1){
-        // read a character
-        c = getchar();
-
-        // if we hit EOF or newline, terminate the string with null character and return
-        if(c == EOF || c == '\n'){
-            buffer[position] = '\0';
-            return buffer;
-        } else{
-            buffer[position] = c;
-        }
-        position++;
-
-        // if we have exceeded the buffer size, reallocate
-        if(position >= bufsize){
-            bufsize += SAFSH_RL_BUFSIZE;
-            char *new_buffer = realloc(buffer, bufsize);
-            if (!new_buffer) {
-                free(buffer);
-                fprintf(stderr, "safsh: allocation error\n");
-                exit(EXIT_FAILURE);
-            }
-            buffer = new_buffer;
-        }
-    }
+    return line;
 }
 
 
